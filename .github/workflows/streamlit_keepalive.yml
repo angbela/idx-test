@@ -1,0 +1,42 @@
+name: Streamlit Keepalive (Browser Visit)
+
+on:
+  schedule:
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+
+jobs:
+  keepalive:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Playwright
+        run: |
+          npm install playwright
+          npx playwright install chromium
+
+      - name: Visit Streamlit app
+        run: |
+          node <<'EOF'
+          const { chromium } = require('playwright');
+
+          (async () => {
+            const browser = await chromium.launch();
+            const page = await browser.newPage();
+
+            await page.goto('https://ang-fetch.streamlit.app/', {
+              waitUntil: 'domcontentloaded',
+              timeout: 60000
+            });
+
+            // Wait so Streamlit fully establishes session
+            await page.waitForTimeout(20000);
+
+            await browser.close();
+          })();
+          EOF
