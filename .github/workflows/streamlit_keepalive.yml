@@ -29,7 +29,7 @@ jobs:
             const browser = await chromium.launch();
             const page = await browser.newPage();
 
-            await page.goto('https://ang-fetch.streamlit.app/', {
+            await page.goto('https://idx-test.streamlit.app/', {
               waitUntil: 'domcontentloaded',
               timeout: 60000
             });
