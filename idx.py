@@ -161,38 +161,46 @@ def stochastic_oscillator_strategy(df, length=14, smoothK=3, smoothD=3, oversold
     return df
 
 def calculate_accuracy(df):
-    """Calculate signal accuracy"""
+    """
+    IDX-compliant accuracy:
+    - Only evaluates Buy -> next Sell trades
+    - Accurate if Sell Close > Buy Close
+    - Ignores unmatched buys
+    """
     df = df.copy()
-    df['future_return'] = df['Close'].shift(-5) / df['Close'] - 1
-    
-    buy_signals = df[df['signal'] == 1]
-    sell_signals = df[df['signal'] == -1]
-    
+
+    buy_indices = df.index[df['signal'] == 1].tolist()
+    sell_indices = df.index[df['signal'] == -1].tolist()
+
     correct = 0
     total = 0
-    
-    # Check buy signals
-    for idx in buy_signals.index:
-        if idx in df.index:
-            future_ret = df.loc[idx, 'future_return']
-            if not pd.isna(future_ret) and future_ret > 0:
-                correct += 1
-            if not pd.isna(future_ret):
-                total += 1
-    
-    # Check sell signals
-    for idx in sell_signals.index:
-        if idx in df.index:
-            future_ret = df.loc[idx, 'future_return']
-            if not pd.isna(future_ret) and future_ret < 0:
-                correct += 1
-            if not pd.isna(future_ret):
-                total += 1
-    
+
+    sell_ptr = 0
+
+    for buy_idx in buy_indices:
+        # Find next sell after this buy
+        while sell_ptr < len(sell_indices) and sell_indices[sell_ptr] <= buy_idx:
+            sell_ptr += 1
+
+        if sell_ptr >= len(sell_indices):
+            break  # no sell after this buy → ignore
+
+        sell_idx = sell_indices[sell_ptr]
+
+        buy_price = df.loc[buy_idx, 'Close']
+        sell_price = df.loc[sell_idx, 'Close']
+
+        if sell_price > buy_price:
+            correct += 1
+
+        total += 1
+        sell_ptr += 1  # move to next sell
+
     accuracy = correct / total if total > 0 else 0
-    signal_count = len(buy_signals) + len(sell_signals)
-    
+    signal_count = total  # completed trades only
+
     return accuracy, signal_count
+
 
 # ======================================================
 # SIDEBAR - Module Selection
@@ -486,7 +494,7 @@ elif module == "🎯 Strategy Optimizer":
             "Minimum Signal Count",
             min_value=5,
             max_value=100,
-            value=25,
+            value=10,
             help="Minimum number of buy/sell signals required"
         )
     
