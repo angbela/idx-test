@@ -162,10 +162,11 @@ def stochastic_oscillator_strategy(df, length=14, smoothK=3, smoothD=3, oversold
 
 def calculate_accuracy(df):
     """
-    IDX-compliant accuracy:
-    - Only evaluates Buy -> next Sell trades
-    - Accurate if Sell Close > Buy Close
-    - Ignores unmatched buys
+    Long-only accuracy (IDX compliant — no short selling).
+    Pairs each Buy with the next Sell that follows it.
+    A trade is "correct" if Sell Close > Buy Close (i.e. profit on long).
+    Unmatched buys (no following sell) are ignored.
+    Returns: (accuracy, completed_trade_count)
     """
     df = df.copy()
 
@@ -197,9 +198,8 @@ def calculate_accuracy(df):
         sell_ptr += 1  # move to next sell
 
     accuracy = correct / total if total > 0 else 0
-    signal_count = total  # completed trades only
 
-    return accuracy, signal_count
+    return accuracy, total
 
 
 # ======================================================
@@ -230,10 +230,11 @@ if module == "🔍 Signal Scanner":
     with col1:
         tickers_input = st.text_area(
             "Enter IDX tickers (one per line, without .JK)",
+            value="BREN\nBBCA\nDSSA\nTPIA\nBYAN\nBBRI\nDCII\nBMRI\nTLKM\nMORA\nASII\nBRPT\nCUAN\nPANI\nIMPC\nBNLI\nBRMS\nBBNI\nDNET\nUNTR\nMLPT\nPTRO\nRISE\nUNVR\nBRIS\nANTM\nICBP\nHMSP\nCASA\nMBMA\nNCKL\nADMR\nSMMA\nAMRT\nCPIN\nISAT\nINCO\nADRO\nEMTK\nINDF\nAADI\nKLBF\nINKP\nPGUN\nPGEO\nTCPI\nMTEL\nSUPR\nGEMS\nPGAS\nTBIG\nMYOR\nBNGA\nARCI\nENRG\nCMRY\nCBDK\nMEGA\nBUVA\nMEDC\nRMKE\nMIKA\nNISP\nTOWR\nSOHO\nSILO\nBBHI\nJPFA\nARKO\nAVIA\nNSSS\nTAPG\nGGRM\nDEWA\nBINA\nMSIN\nRAJA\nPTBA\nJARR\nTINS\nPNBN\nBKSL\nKPIG\nARTO\nBSIM\nTKIM\nJSMR\nMDIY\nBDMN\nAKRA\nITMG\nINTP\nRATU\nSCMA\nMKPI\nFAPA\nBTPN\nHEAL\nBSDE\nCITA\nNICL\nMAPI\nALII\nPWON\nMAPA\nSMGR\nLIFE\nPOLU\nAPIC\nBNII\nHRUM\nBBTN\nSIDO\nCTRA\nWIFI\nPSAB\nULTJ\nDSNG\nBANK\nSMAR\nAALI\nBBSI\nSSMS\nSTAA\nSGRO\nJRPT\nAUTO\nGOOD\nMCOL\nSTTP\nTSPC\nSHIP\nMIDI\nPRAY\nMLBI\nHRTA\nESSA\nPOWR\nCYBR\nCLEO\nBFIN\nCMNP\nBSSR\nSMSM\nCNMA\nPNLF\nTMAS\nBTPS\nSIMP\nADES\nPLIN\nEDGE\nBJBR\nBULL\nADMF\nSSIA\nINPP\nTLDN\nSGER\nBJTM\nBBMD\nLSIP\nABMM\nDUTI\nDATA\nDMND\nINET\nMTDL\nJSPT\nKRAS\nACES\nIBST\nSMCB\nLPKR\nSMDR\nELPI\nSMRA\nDMAS\nDAAZ\nHUMI\nKIJA\nERAA\nMAYA\nOMED\nBALI\nBBYB\nGTSI\nSAME\nEPMT\nANJT\nAGRO\nYULE\nBESS\nPBSA\nUANG\nCTBN\nDKFT\nMBSS\nAGII\nSOCI\nCASS\nBPII\nFISH\nDRMA\nTRIM\nMTLA\nROTI\nIATA\nIMAS\nMASB\nFPNI\nTGKA\nAPLN\nBWPT\nGOLF\nIFSH\nTUGU\nSMMT\nMSTI\nBIRD\nASSA\nINPC\nMNCN\nMPMX\nBHIT\nCPRO\nAMAR\nBUKK\nMETA\nSDRA\nNOBU\nBACA\nTBLA\nLPPF\nSMDM\nAGRS\nFUTR\nGJTL\nJTPE\nVICI\nPSGO\nARNA\nELSA\nASRI\nKEEN\nMMLP\nRDTX\nSKRN\nPBID\nHEXA\nTOTL\nBSWD\nKEJU\nUNIC\nWIIM\nBEEF\nCBUT\nPNIN\nIRSX\nBGTG\nISSP\nPORT\nLPCK\nSAMF\nBNBA\nJAWA\nMYOH\nDAYA\nMARK\nRALS\nHATM\nMCOR\nMAHA\nDNAR\nKETR\nBABP\nSMIL\nSIPD\nDWGL\nSMBR\nINDS\nNICE\nPNGO\nBMTR\nNRCA\nTOTO\nIMJS\nBCAP\nTEBE\nDMMX\nGMTD\nBISI\nTFCO\nMGRO\nBVIC\nABDA\nPTPP\nMTMH\nBOLT\nIPCC\nWOOD\nPPRE\nADHI\nMLIA\nKMTR\nBKSW\nRIMO\nPNBS\nPADI\nWINS\nMKAP\nPRDA\nIFII\nPKPK\nPTSN\nTPMA\nMINE\nLPGI\nPOLI\nAMAG\nBBRM\nSUNI\nMBAP\nPSSI\nSTAR\nITMA\nROCK\nGWSA\nMSJA\nBSBK\nKINO\nFMII\nMAIN\nCSRA\nSCCO\nDOOH\nDVLA\nCSAP\nCARS\nDEPO\nIPCM\nMKTR\nGSMF\nUCID\nSKLT\nINDO\nERAL\nKKGI\nSPTO\nCITY\nBLTA\nBMHS\nPMJS\nTIFA\nMITI\nAMFG\nALDO\nDLTA\nATIC\nBEKS\nGZCO\nSONA\nNEST\nBBLD\nJKON\nMERK\nBLES\nCEKA\nJIHD\nBLUE\nLIVE\nEURO\nTRST\nLTLS\nADCP\nCFIN\nLEAD\nARTA\nKBLI\nAREA\nBUAH\nAISA\nCAMP\nASLC\nGDST\nKDTN\nARII\nWIRG\nSKBM\nWOMF\nBEST\nTBMS\nPBRX\nPANS\nBOLA\nMTWI\nSMGA\nPEVE\nNIKL\nCHIP\nHGII\nRELI\nPDPP\nMMIX",
             placeholder="BBCA\nBMRI\nTLKM\nASII\nICBP",
             height=150
         )
-    
+        
     with col2:
         st.markdown("### Indicator Parameters")
         
@@ -374,13 +375,18 @@ if module == "🔍 Signal Scanner":
         st.markdown("---")
         st.subheader("📊 Scan Results")
         
-        df = st.session_state.scanner_result_df
+        df = st.session_state.scanner_result_df.copy()
         
         show_only_buy = st.checkbox("Show only stocks with buy signals", True)
         if show_only_buy:
             df = df[df["LastBuySignal"].notna()]
         
-        st.dataframe(df, use_container_width=True, height=300)
+        # Format Volume and Close with thousand separators for display
+        df_display = df.copy()
+        df_display["Volume"] = df_display["Volume"].apply(lambda x: f"{int(x):,}")
+        df_display["Close"] = df_display["Close"].apply(lambda x: f"{x:,.2f}")
+        
+        st.dataframe(df_display, use_container_width=True, height=300)
         
         if not df.empty:
             st.markdown("---")
@@ -495,7 +501,7 @@ elif module == "🎯 Strategy Optimizer":
             min_value=5,
             max_value=100,
             value=10,
-            help="Minimum number of buy/sell signals required"
+            help="Minimum number of completed Buy→Sell trades required"
         )
     
     optimize_btn = st.button("⚡ Optimize Strategies", type="primary", use_container_width=True)
@@ -635,7 +641,7 @@ elif module == "🎯 Strategy Optimizer":
         with col2:
             st.metric("Accuracy", f"{st.session_state.optimizer_best_acc:.1%}")
         with col3:
-            st.metric("Signal Count", st.session_state.optimizer_best_signals)
+            st.metric("Completed Trades", st.session_state.optimizer_best_signals)
         with col4:
             st.metric("Parameters", st.session_state.optimizer_best_params)
         
@@ -650,7 +656,7 @@ elif module == "🎯 Strategy Optimizer":
                     "Strategy": strat,
                     "Parameters": params,
                     "Accuracy": f"{acc:.2%}",
-                    "Signals": sig_cnt
+                    "Completed Trades": sig_cnt
                 })
         
         results_df = pd.DataFrame(results_data)
@@ -700,7 +706,7 @@ elif module == "🎯 Strategy Optimizer":
             ))
             
             fig.update_layout(
-                title=f'{ticker} - {st.session_state.optimizer_best_strategy} ({st.session_state.optimizer_best_params})<br>Accuracy: {st.session_state.optimizer_best_acc:.2%} | Signals: {st.session_state.optimizer_best_signals}',
+                title=f'{ticker} - {st.session_state.optimizer_best_strategy} ({st.session_state.optimizer_best_params})<br>Accuracy: {st.session_state.optimizer_best_acc:.2%} | Completed Trades: {st.session_state.optimizer_best_signals}',
                 xaxis_title='Date',
                 yaxis_title='Price',
                 xaxis_rangeslider_visible=False,
@@ -718,7 +724,7 @@ elif module == "🎯 Strategy Optimizer":
         ### Strategy Optimizer Guide
         
         1. **Enter a ticker** (without .JK suffix, e.g., BBCA, BMRI, TLKM)
-        2. **Set minimum signal count** - strategies with fewer signals will be excluded
+        2. **Set minimum signal count** - strategies with fewer completed trades will be excluded
         3. **Click Optimize** - the tool will test 25 different parameter combinations across 5 strategies
         
         **Strategies tested:**
@@ -728,10 +734,12 @@ elif module == "🎯 Strategy Optimizer":
         - **Bollinger Bands**: Tests 5 different BB configurations
         - **Stochastic**: Tests 5 different Stochastic settings
         
-        **Accuracy Calculation:**
-        - Checks if buy signals lead to price increases (5 days forward)
-        - Checks if sell signals lead to price decreases (5 days forward)
-        - Higher accuracy = more reliable signals
+        **Accuracy Calculation (Long-only, IDX compliant):**
+        - Each Buy signal is paired with the next Sell signal that follows it
+        - A trade is counted as **correct** if the Sell price is higher than the Buy price (i.e. profit on the long position)
+        - Unmatched buys (no following sell) are excluded from the count
+        - Short selling is not considered, as IDX does not allow it
+        - Higher accuracy = more reliable long-side signals
         
         **Note:** Past performance doesn't guarantee future results!
         """)
