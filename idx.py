@@ -27,6 +27,11 @@ if "optimizer_results" not in st.session_state:
     st.session_state.optimizer_best_df = None
     st.session_state.optimizer_best_strategy = None
 
+if "oversold_scanned" not in st.session_state:
+    st.session_state.oversold_scanned = False
+    st.session_state.oversold_result_df = None
+    st.session_state.oversold_data_cache = {}
+
 # ======================================================
 # SHARED FUNCTIONS - Technical Indicators
 # ======================================================
@@ -208,7 +213,7 @@ def calculate_accuracy(df):
 st.sidebar.title("📊 IDX Trading Tool")
 module = st.sidebar.radio(
     "Select Module",
-    ["🔍 Signal Scanner", "🎯 Strategy Optimizer"]
+    ["🔍 Signal Scanner", "🎯 Strategy Optimizer", "⚠️ Overbought/Oversold Tracker"]
 )
 
 # ======================================================
@@ -742,4 +747,333 @@ elif module == "🎯 Strategy Optimizer":
         - Higher accuracy = more reliable long-side signals
         
         **Note:** Past performance doesn't guarantee future results!
+        """)
+
+# ======================================================
+# MODULE 3: OVERSOLD TRACKER
+# ======================================================
+elif module == "⚠️ Overbought/Oversold Tracker":
+    st.title("⚠️ Oversold Tracker")
+    st.markdown("Track stocks in oversold zones to catch potential buy opportunities early (IDX long-only compliant)")
+    
+    # Indicator selector
+    indicator = st.selectbox(
+        "📌 Select Indicator",
+        ["Stochastic Slow", "RSI", "MACD"]
+    )
+    
+    # Inputs
+    col1, col2 = st.columns([2, 1])
+    
+    with col1:
+        tickers_input = st.text_area(
+            "Enter IDX tickers (one per line, without .JK)",
+            value="BREN\nBBCA\nDSSA\nTPIA\nBYAN\nBBRI\nDCII\nBMRI\nTLKM\nMORA\nASII\nBRPT\nCUAN\nPANI\nIMPC\nBNLI\nBRMS\nBBNI\nDNET\nUNTR\nMLPT\nPTRO\nRISE\nUNVR\nBRIS\nANTM\nICBP\nHMSP\nCASA\nMBMA\nNCKL\nADMR\nSMMA\nAMRT\nCPIN\nISAT\nINCO\nADRO\nEMTK\nINDF\nAADI\nKLBF\nINKP\nPGUN\nPGEO\nTCPI\nMTEL\nSUPR\nGEMS\nPGAS\nTBIG\nMYOR\nBNGA\nARCI\nENRG\nCMRY\nCBDK\nMEGA\nBUVA\nMEDC\nRMKE\nMIKA\nNISP\nTOWR\nSOHO\nSILO\nBBHI\nJPFA\nARKO\nAVIA\nNSSS\nTAPG\nGGRM\nDEWA\nBINA\nMSIN\nRAJA\nPTBA\nJARR\nTINS\nPNBN\nBKSL\nKPIG\nARTO\nBSIM\nTKIM\nJSMR\nMDIY\nBDMN\nAKRA\nITMG\nINTP\nRATU\nSCMA\nMKPI\nFAPA\nBTPN\nHEAL\nBSDE\nCITA\nNICL\nMAPI\nALII\nPWON\nMAPA\nSMGR\nLIFE\nPOLU\nAPIC\nBNII\nHRUM\nBBTN\nSIDO\nCTRA\nWIFI\nPSAB\nULTJ\nDSNG\nBANK\nSMAR\nAALI\nBBSI\nSSMS\nSTAA\nSGRO\nJRPT\nAUTO\nGOOD\nMCOL\nSTTP\nTSPC\nSHIP\nMIDI\nPRAY\nMLBI\nHRTA\nESSA\nPOWR\nCYBR\nCLEO\nBFIN\nCMNP\nBSSR\nSMSM\nCNMA\nPNLF\nTMAS\nBTPS\nSIMP\nADES\nPLIN\nEDGE\nBJBR\nBULL\nADMF\nSSIA\nINPP\nTLDN\nSGER\nBJTM\nBBMD\nLSIP\nABMM\nDUTI\nDATA\nDMND\nINET\nMTDL\nJSPT\nKRAS\nACES\nIBST\nSMCB\nLPKR\nSMDR\nELPI\nSMRA\nDMAS\nDAAZ\nHUMI\nKIJA\nERAA\nMAYA\nOMED\nBALI\nBBYB\nGTSI\nSAME\nEPMT\nANJT\nAGRO\nYULE\nBESS\nPBSA\nUANG\nCTBN\nDKFT\nMBSS\nAGII\nSOCI\nCASS\nBPII\nFISH\nDRMA\nTRIM\nMTLA\nROTI\nIATA\nIMAS\nMASB\nFPNI\nTGKA\nAPLN\nBWPT\nGOLF\nIFSH\nTUGU\nSMMT\nMSTI\nBIRD\nASSA\nINPC\nMNCN\nMPMX\nBHIT\nCPRO\nAMAR\nBUKK\nMETA\nSDRA\nNOBU\nBACA\nTBLA\nLPPF\nSMDM\nAGRS\nFUTR\nGJTL\nJTPE\nVICI\nPSGO\nARNA\nELSA\nASRI\nKEEN\nMMLP\nRDTX\nSKRN\nPBID\nHEXA\nTOTL\nBSWD\nKEJU\nUNIC\nWIIM\nBEEF\nCBUT\nPNIN\nIRSX\nBGTG\nISSP\nPORT\nLPCK\nSAMF\nBNBA\nJAWA\nMYOH\nDAYA\nMARK\nRALS\nHATM\nMCOR\nMAHA\nDNAR\nKETR\nBABP\nSMIL\nSIPD\nDWGL\nSMBR\nINDS\nNICE\nPNGO\nBMTR\nNRCA\nTOTO\nIMJS\nBCAP\nTEBE\nDMMX\nGMTD\nBISI\nTFCO\nMGRO\nBVIC\nABDA\nPTPP\nMTMH\nBOLT\nIPCC\nWOOD\nPPRE\nADHI\nMLIA\nKMTR\nBKSW\nRIMO\nPNBS\nPADI\nWINS\nMKAP\nPRDA\nIFII\nPKPK\nPTSN\nTPMA\nMINE\nLPGI\nPOLI\nAMAG\nBBRM\nSUNI\nMBAP\nPSSI\nSTAR\nITMA\nROCK\nGWSA\nMSJA\nBSBK\nKINO\nFMII\nMAIN\nCSRA\nSCCO\nDOOH\nDVLA\nCSAP\nCARS\nDEPO\nIPCM\nMKTR\nGSMF\nUCID\nSKLT\nINDO\nERAL\nKKGI\nSPTO\nCITY\nBLTA\nBMHS\nPMJS\nTIFA\nMITI\nAMFG\nALDO\nDLTA\nATIC\nBEKS\nGZCO\nSONA\nNEST\nBBLD\nJKON\nMERK\nBLES\nCEKA\nJIHD\nBLUE\nLIVE\nEURO\nTRST\nLTLS\nADCP\nCFIN\nLEAD\nARTA\nKBLI\nAREA\nBUAH\nAISA\nCAMP\nASLC\nGDST\nKDTN\nARII\nWIRG\nSKBM\nWOMF\nBEST\nTBMS\nPBRX\nPANS\nBOLA\nMTWI\nSMGA\nPEVE\nNIKL\nCHIP\nHGII\nRELI\nPDPP\nMMIX",
+            placeholder="BBCA\nBMRI\nTLKM\nASII\nICBP",
+            height=150
+        )
+    
+    with col2:
+        st.markdown("### Indicator Parameters")
+        
+        if indicator == "Stochastic Slow":
+            stoch_length = st.number_input("Length", 5, 30, 14, key="stoch_len")
+            stoch_smoothK = st.number_input("Smooth K", 1, 10, 3, key="stoch_k")
+            stoch_smoothD = st.number_input("Smooth D", 1, 10, 3, key="stoch_d")
+            stoch_oversold = st.number_input("Oversold Level", 5, 30, 20, key="stoch_os")
+            
+        elif indicator == "RSI":
+            rsi_period = st.number_input("Period", 5, 30, 14, key="rsi_per")
+            rsi_oversold = st.number_input("Oversold Level", 10, 40, 30, key="rsi_os")
+            
+        elif indicator == "MACD":
+            macd_fast = st.number_input("Fast EMA", 5, 20, 12, key="macd_f")
+            macd_slow = st.number_input("Slow EMA", 20, 50, 26, key="macd_s")
+            macd_signal = st.number_input("Signal EMA", 5, 20, 9, key="macd_sig")
+    
+    scan_btn = st.button("🔍 Scan Oversold Stocks", type="primary", use_container_width=True)
+    
+    # Run scan
+    if scan_btn and tickers_input.strip():
+        tickers = [
+            t.strip().upper() + ".JK"
+            for t in tickers_input.splitlines()
+            if t.strip()
+        ]
+        
+        progress = st.progress(0)
+        status = st.empty()
+        
+        rows = []
+        cache = {}
+        
+        for i, ticker in enumerate(tickers, 1):
+            status.text(f"Scanning {i}/{len(tickers)} : {ticker}")
+            progress.progress(i / len(tickers))
+            
+            try:
+                df = yf.Ticker(ticker).history(period="6mo", interval="1d")
+                if df.empty or len(df) < 50:
+                    continue
+                
+                # Calculate selected indicator
+                indicator_status = ""
+                indicator_date = pd.NaT
+                indicator_value = 0
+                
+                if indicator == "Stochastic Slow":
+                    df = stochastic(df, stoch_length, stoch_smoothK, stoch_smoothD)
+                    # Find most recent date when %K was in oversold zone
+                    oversold_mask = df["%K"] <= stoch_oversold
+                    if oversold_mask.any():
+                        last_os_date = df[oversold_mask].index[-1]
+                        indicator_date = last_os_date
+                        indicator_value = df.loc[last_os_date, "%K"]
+                        # Check if currently oversold
+                        if df["%K"].iloc[-1] <= stoch_oversold:
+                            indicator_status = "🟢 Oversold"
+                        else:
+                            indicator_status = "⚠️ Was Oversold"
+                    else:
+                        indicator_status = "➖ Normal"
+                        indicator_value = df["%K"].iloc[-1]
+                
+                elif indicator == "RSI":
+                    df = rsi(df, rsi_period)
+                    oversold_mask = df["RSI"] <= rsi_oversold
+                    if oversold_mask.any():
+                        last_os_date = df[oversold_mask].index[-1]
+                        indicator_date = last_os_date
+                        indicator_value = df.loc[last_os_date, "RSI"]
+                        if df["RSI"].iloc[-1] <= rsi_oversold:
+                            indicator_status = "🟢 Oversold"
+                        else:
+                            indicator_status = "⚠️ Was Oversold"
+                    else:
+                        indicator_status = "➖ Normal"
+                        indicator_value = df["RSI"].iloc[-1]
+                
+                elif indicator == "MACD":
+                    df = macd(df, macd_fast, macd_slow, macd_signal)
+                    # For MACD: oversold when MACD is significantly below signal line
+                    macd_diff = df["MACD"] - df["MACD_signal"]
+                    # Consider oversold if MACD - Signal < -2 * std of the difference
+                    threshold = -2 * macd_diff.std()
+                    oversold_mask = macd_diff <= threshold
+                    if oversold_mask.any():
+                        last_os_date = df[oversold_mask].index[-1]
+                        indicator_date = last_os_date
+                        indicator_value = df.loc[last_os_date, "MACD"]
+                        if macd_diff.iloc[-1] <= threshold:
+                            indicator_status = "🟢 Oversold"
+                        else:
+                            indicator_status = "⚠️ Was Oversold"
+                    else:
+                        indicator_status = "➖ Normal"
+                        indicator_value = df["MACD"].iloc[-1]
+                
+                cache[ticker] = df
+                
+                # Prepare row data
+                rows.append({
+                    "Ticker": ticker.replace(".JK", ""),
+                    "Status": indicator_status,
+                    "Last_Oversold_Date": indicator_date,
+                    "Indicator_Value": indicator_value,
+                    "Close": df["Close"].iloc[-1],
+                    "Volume": int(df["Volume"].iloc[-1])
+                })
+            
+            except Exception as e:
+                st.warning(f"Failed to fetch {ticker}: {str(e)}")
+                continue
+        
+        result_df = pd.DataFrame(rows)
+        
+        st.session_state.oversold_result_df = result_df
+        st.session_state.oversold_data_cache = cache
+        st.session_state.oversold_scanned = True
+        st.session_state.oversold_indicator = indicator
+        
+        status.text("✅ Scan completed")
+        progress.progress(1.0)
+    
+    # Results + Chart
+    if st.session_state.oversold_scanned:
+        st.markdown("---")
+        st.subheader("📊 Oversold Stocks - Potential Buy Opportunities")
+        
+        df = st.session_state.oversold_result_df.copy()
+        
+        # Filter options
+        col1, col2 = st.columns(2)
+        with col1:
+            show_only_oversold = st.checkbox("Show only currently oversold stocks", True)
+        with col2:
+            show_only_was_oversold = st.checkbox("Show stocks that were oversold (potential golden cross)", True)
+        
+        # Apply filters
+        if show_only_oversold:
+            df = df[df["Status"].str.contains("🟢", na=False)]
+        
+        if show_only_was_oversold and not show_only_oversold:
+            df = df[df["Status"].str.contains("⚠️", na=False)]
+        
+        # Sort by most recent oversold date
+        df = df.sort_values("Last_Oversold_Date", ascending=False)
+        
+        # Format for display
+        df_display = df.copy()
+        df_display["Close"] = df_display["Close"].apply(lambda x: f"{x:,.2f}")
+        df_display["Volume"] = df_display["Volume"].apply(lambda x: f"{int(x):,}")
+        df_display["Indicator_Value"] = df_display["Indicator_Value"].apply(lambda x: f"{x:.2f}" if pd.notna(x) else "-")
+        
+        st.dataframe(df_display, use_container_width=True, height=400)
+        
+        if not df.empty:
+            st.markdown("---")
+            st.subheader("📈 Chart Analysis")
+            
+            selected = st.selectbox("Select ticker to view chart", df["Ticker"].unique())
+            dfc = st.session_state.oversold_data_cache[selected + ".JK"]
+            selected_indicator = st.session_state.oversold_indicator
+            
+            # Create subplot
+            fig = make_subplots(
+                rows=2, cols=1,
+                shared_xaxes=True,
+                row_heights=[0.6, 0.4],
+                vertical_spacing=0.05
+            )
+            
+            # Candlestick on main panel
+            fig.add_trace(go.Candlestick(
+                x=dfc.index,
+                open=dfc["Open"],
+                high=dfc["High"],
+                low=dfc["Low"],
+                close=dfc["Close"],
+                name="Price"
+            ), row=1, col=1)
+            
+            # Add indicator panel
+            if selected_indicator == "Stochastic Slow":
+                fig.add_trace(go.Scatter(
+                    x=dfc.index,
+                    y=dfc["%K"],
+                    name="%K",
+                    line=dict(color="blue")
+                ), row=2, col=1)
+                
+                fig.add_trace(go.Scatter(
+                    x=dfc.index,
+                    y=dfc["%D"],
+                    name="%D",
+                    line=dict(color="orange")
+                ), row=2, col=1)
+                
+                fig.add_hline(
+                    y=stoch_oversold,
+                    row=2, col=1,
+                    line_dash="dash",
+                    line_color="green",
+                    annotation_text="Oversold"
+                )
+                
+                fig.add_hline(
+                    y=80,
+                    row=2, col=1,
+                    line_dash="dash",
+                    line_color="red",
+                    annotation_text="Overbought"
+                )
+            
+            elif selected_indicator == "RSI":
+                fig.add_trace(go.Scatter(
+                    x=dfc.index,
+                    y=dfc["RSI"],
+                    name="RSI",
+                    line=dict(color="purple")
+                ), row=2, col=1)
+                
+                fig.add_hline(
+                    y=rsi_oversold,
+                    row=2, col=1,
+                    line_dash="dash",
+                    line_color="green",
+                    annotation_text="Oversold"
+                )
+                
+                fig.add_hline(
+                    y=70,
+                    row=2, col=1,
+                    line_dash="dash",
+                    line_color="red",
+                    annotation_text="Overbought"
+                )
+            
+            elif selected_indicator == "MACD":
+                fig.add_trace(go.Scatter(
+                    x=dfc.index,
+                    y=dfc["MACD"],
+                    name="MACD",
+                    line=dict(color="blue")
+                ), row=2, col=1)
+                
+                fig.add_trace(go.Scatter(
+                    x=dfc.index,
+                    y=dfc["MACD_signal"],
+                    name="Signal",
+                    line=dict(color="red")
+                ), row=2, col=1)
+                
+                fig.add_trace(go.Bar(
+                    x=dfc.index,
+                    y=dfc["MACD_hist"],
+                    name="Histogram",
+                    marker_color="gray"
+                ), row=2, col=1)
+            
+            fig.update_layout(
+                height=800,
+                xaxis_rangeslider_visible=False,
+                showlegend=True,
+                title=f"{selected} - {selected_indicator} Oversold Analysis"
+            )
+            
+            st.plotly_chart(fig, use_container_width=True)
+    
+    # Instructions
+    with st.expander("ℹ️ How to use Oversold Tracker"):
+        st.markdown("""
+        ### Oversold Tracker Guide
+        
+        **Purpose:** Identify stocks in oversold conditions to catch potential buy opportunities early (IDX long-only compliant).
+        
+        **How to use:**
+        1. **Select indicator** - Choose Stochastic Slow, RSI, or MACD from dropdown
+        2. **Set parameters** - Adjust oversold levels and indicator settings
+        3. **Enter tickers** - Add IDX stocks you want to monitor (without .JK)
+        4. **Scan** - The tool will identify stocks in oversold zones
+        
+        **Status Indicators:**
+        - 🟢 **Oversold** - Currently in oversold zone (potential buy opportunity)
+        - ⚠️ **Was Oversold** - Recently left oversold zone (watch for golden cross/reversal)
+        - ➖ **Normal** - Not in extreme zones
+        
+        **Indicator Definitions:**
+        - **Stochastic (Slow)**: Oversold when %K ≤ threshold (default 20)
+        - **RSI**: Oversold when RSI ≤ threshold (default 30)
+        - **MACD**: Oversold when MACD is significantly below signal line (< -2 standard deviations)
+        
+        **Trading Strategy (Long-Only):**
+        When a stock shows "🟢 Oversold", it may be a good entry point for long positions. Watch for:
+        - Golden cross forming (indicator starting to reverse upward)
+        - Price finding support
+        - Volume confirmation on reversal
+        
+        When a stock shows "⚠️ Was Oversold", it recently left the oversold zone and may be beginning an upward trend.
+        
+        **Why This Matters for IDX:**
+        Since IDX doesn't allow short selling, we focus on finding oversold stocks (potential buy opportunities) rather than overbought stocks. This helps you identify entry points before the recovery begins!
         """)
