@@ -28,8 +28,7 @@ jobs:
           const urls = [
             'https://idx-test.streamlit.app/',
             'https://idx-rebalancing.streamlit.app/',
-            'https://rubixxxx.streamlit.app/',
-            'https://ang-trend.streamlit.app/'
+            'https://rubixxxx.streamlit.app/'
           ];
 
           (async () => {
